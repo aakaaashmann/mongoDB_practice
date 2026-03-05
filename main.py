@@ -2,7 +2,13 @@ from fastapi import FastAPI
 from database import users_collection, address_collection
 from bson import ObjectId
 import random
-app = FastAPI()
+from aggregation import aggregation_route
+
+app = FastAPI( 
+    title="FastAPI + MongoDB",
+    description="A simple FastAPI application demonstrating MongoDB integration with aggregation pipelines.",
+    version="1.0.0",
+)
 
 @app.get("/", tags=["Root"])
 def home():
@@ -56,3 +62,23 @@ def users_over_60():
         user["address_id"] = str(user["address_id"])
 
     return users
+
+@app.get("/sort-users-by-age", tags=["Sort"])
+def sort_users_by_age():
+    users = list(users_collection.find().sort("age", 1))
+    for user in users:
+        user["_id"] = str(user["_id"])  
+        user["address_id"] = str(user["address_id"])
+    return users
+
+@app.get("/sort-users-by-name", tags=["Sort"])
+def sort_users_by_name():
+    users = list(users_collection.find().sort("name", 1))
+    for user in users:  
+        user["_id"] = str(user["_id"])  
+        user["address_id"] = str(user["address_id"])
+    return users
+
+
+
+app.include_router(aggregation_route.router, prefix="/aggregation", tags=["Aggregation"])
