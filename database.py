@@ -10,5 +10,7 @@ DATABASE_NAME = os.getenv("DATABASE_NAME")
 client = MongoClient(MONGO_URL)
 db = client[DATABASE_NAME]
 
-users_collection = db["users"]
-address_collection = db["addresses"]
+# users_collection = db["users"]
+# address_collection = db["addresses"]
+
+orders_collection = db["orders"]
