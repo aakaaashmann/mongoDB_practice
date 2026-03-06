@@ -6,8 +6,8 @@ router = APIRouter()
 # This route retrieves all users who live in a specific city
 # performing a lookup to join the users collection with the addresses collection
 # matching the city name, and returning the relevant user information along with their address details.
-@router.get("/users-by-city/{city_name}")
-def users_by_city(city_name: str):
+@router.get("/users?city={city}")
+def users_by_city(city: str | None = None):
     pipeline = [
         {  
             "$lookup":{
@@ -19,13 +19,14 @@ def users_by_city(city_name: str):
         },
         {
             "$unwind": "$address"
-        },
-        {
-            "$match": {
-                "address.city" : city_name
-            }
         }
     ]
+    if city:
+        pipeline.append({
+            "$match": {
+                "address.city": city
+            }
+        })
     users = list(users_collection.aggregate(pipeline))
     for user in users:
         user["_id"] = str(user["_id"])  
@@ -36,7 +37,7 @@ def users_by_city(city_name: str):
 # This route calculates the average age of users in each city 
 # performing a lookup to join the users collection with the addresses collection
 # grouping the results by city, and calculating the average age for each city.
-@router.get("/average-age-by-city")
+@router.get("/users/average-age-by-city")
 def average_age_by_city():
     pipeline = [
         {  
@@ -65,7 +66,7 @@ def average_age_by_city():
 
 # This route groups users into age groups (Under 25, 25-60, Over 60)
 # counts how many users fall into each age group.
-@router.get("/users-by-age-group")
+@router.get("/users/age-groups")
 def users_by_age_group():
     pipeline = [
         {
@@ -90,7 +91,7 @@ def users_by_age_group():
 
 # This route combines both city and age group aggregation to provide 
 # how many users fall into each age group for a specific city.
-@router.get("/users-with-addresses")
+@router.get("/users?include=address")
 def users_with_addresses():
     pipeline = [
         {  
@@ -114,7 +115,7 @@ def users_with_addresses():
 
 # This route provides the count of users in each city 
 # by performing a lookup to join the users collection with the addresses collection, grouping the results by city, and counting the number of users in each city.
-@router.get("/user-count-by-city")
+@router.get("/users/count-by-city")
 def user_count_by_city():
     pipeline = [
         {  
@@ -142,8 +143,8 @@ def user_count_by_city():
 
 # This route combines both city and age group aggregation to provide 
 # how many users fall into each age group for a specific city.
-@router.get("/city-by-age-group")
-def city_by_age_group(city_name: str):
+@router.get("/users/age-group?city={city_name}")
+def city_by_age_group(city_name: str | None = None):
     pipeline = [
         {  
             "$lookup":{

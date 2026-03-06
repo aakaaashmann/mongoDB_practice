@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from database import users_collection, address_collection
 from bson import ObjectId
 import random
@@ -45,44 +45,25 @@ def insert_users():
     return {"message": "100 users inserted"}
 
 # This route finds all users under the age of 25 and returns their details.
-@app.get("/users-under-25", tags=["Find"])
-def users_under_25():
-    users = list(users_collection.find({"age": {"$lt": 25}}))
 
+@app.get("/users", tags=["Read"])
+def get_users(
+    age_lt: int | None = None,
+    age_gt: int | None = None,
+    sort: str | None = None
+):
+    query = {}
+
+    if age_lt:
+        query["age"] = {"$lt": age_lt}
+    if age_gt:
+        query["age"] = {"$gt": age_gt}
+    users = list(users_collection.find(query))
     for user in users:
         user["_id"] = str(user["_id"])
-        user["address_id"] = str(user["address_id"])
-
-    return users
-# This route finds all users over the age of 60 and returns their details.
-@app.get("/users-over-60", tags=["Find"])
-def users_over_60():
-    users = list(users_collection.find({"age": {"$gt": 60}}))
-
-    for user in users:
-        user["_id"] = str(user["_id"])
-        user["address_id"] = str(user["address_id"])
-
-    return users
-
-# This route sorts users by their age in ascending order and returns their details.
-@app.get("/sort-users-by-age", tags=["Sort"])
-def sort_users_by_age():
-    users = list(users_collection.find().sort("age", 1))
-    for user in users:
-        user["_id"] = str(user["_id"])  
-        user["address_id"] = str(user["address_id"])
-    return users
-
-# This route sorts users by their name in ascending order and returns their details.
-@app.get("/sort-users-by-name", tags=["Sort"])
-def sort_users_by_name():
-    users = list(users_collection.find().sort("name", 1))
-    for user in users:  
-        user["_id"] = str(user["_id"])  
-        user["address_id"] = str(user["address_id"])
+        if "address_id" in user:
+            user["address_id"] = str(user["address_id"])
     return users
 
 
-
-app.include_router(aggregation_route.router, prefix="/aggregation", tags=["Aggregation"])
+app.include_router(aggregation_route.router, prefix="/agg", tags=["Aggregation"])
